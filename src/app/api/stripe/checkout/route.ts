@@ -1,7 +1,7 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getEnv, getRequiredEnv } from "@/lib/env";
+import { getRequiredEnv } from "@/lib/env";
 import { getStripe } from "@/lib/stripe";
 
 export async function POST() {
@@ -35,7 +35,8 @@ export async function POST() {
       });
     }
 
-    const baseUrl = getEnv("NEXT_PUBLIC_URL") ?? "http://localhost:3000";
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL || "https://proposal-kit-rose.vercel.app";
     const priceId = getRequiredEnv("STRIPE_PRICE_ID");
 
     const session = await stripe.checkout.sessions.create({
