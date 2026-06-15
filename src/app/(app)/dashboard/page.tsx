@@ -45,7 +45,7 @@ export default async function DashboardPage() {
   const quotaRemaining = user?.generationQuota ?? 0;
 
   return (
-    <div className="space-y-10 rounded-xl bg-slate-950 p-6 sm:p-8">
+    <div className="space-y-10">
       <section>
         <h1 className="text-3xl font-bold tracking-tight text-white">Dashboard</h1>
         <p className="mt-2 text-slate-400">

@@ -34,7 +34,7 @@ export default async function DashboardDocumentPage({ params }: Props) {
   if (!document) notFound();
 
   return (
-    <div className="space-y-6 rounded-xl bg-slate-950 p-6 sm:p-8">
+    <div className="space-y-6">
       <Link
         href="/dashboard"
         className="inline-flex items-center gap-1.5 text-sm text-slate-400 transition hover:text-white"

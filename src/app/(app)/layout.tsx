@@ -15,9 +15,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-      <Header isPro={isPro} />
-      <main className="py-8">{children}</main>
+    <div className="min-h-screen bg-slate-950 text-slate-300">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <Header isPro={isPro} />
+        <main className="py-8">{children}</main>
+      </div>
     </div>
   );
 }
