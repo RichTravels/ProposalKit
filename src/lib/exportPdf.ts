@@ -1,5 +1,13 @@
 import jsPDF from "jspdf";
 
+const stripEmoji = (text: string) =>
+  text
+    .replace(
+      /[\u{1F300}-\u{1FFFF}|\u{2600}-\u{26FF}|\u{2700}-\u{27BF}|\u00a9|\u00ae|\u2000-\u3300]/gu,
+      ""
+    )
+    .trim();
+
 export async function exportToPdf(
   content: string,
   title: string,
@@ -33,7 +41,7 @@ export async function exportToPdf(
   const lines = content.split("\n");
 
   for (const line of lines) {
-    const trimmed = line.trim();
+    const trimmed = stripEmoji(line);
 
     if (!trimmed) {
       y += 4;
