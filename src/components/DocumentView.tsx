@@ -1,12 +1,14 @@
 import CopyButton from "@/components/CopyButton";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
 
 type DocumentViewProps = {
   title: string;
   content: string;
   tone?: string;
   theme?: "light" | "dark";
+  actions?: ReactNode;
 };
 
 export default function DocumentView({
@@ -14,6 +16,7 @@ export default function DocumentView({
   content,
   tone,
   theme = "light",
+  actions,
 }: DocumentViewProps) {
   const isDark = theme === "dark";
 
@@ -47,7 +50,10 @@ export default function DocumentView({
             </p>
           ) : null}
         </div>
-        <CopyButton text={content} copyKey={`${title}-copy`} />
+        <div className="flex items-center gap-2">
+          {actions}
+          <CopyButton text={content} copyKey={`${title}-copy`} />
+        </div>
       </div>
       <div
         className={cn(

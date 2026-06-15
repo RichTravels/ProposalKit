@@ -40,3 +40,14 @@ export function formatDocumentDate(date: Date): string {
     year: "numeric",
   });
 }
+
+export const DOCUMENT_PDF_TYPE_LABELS: Record<DocumentType, string> = {
+  PROPOSAL: "Proposal",
+  SOW: "SOW",
+  BRIEF: "Brief",
+};
+
+export function buildPdfFilename(title: string, type: DocumentType): string {
+  const safeTitle = title.replace(/[^a-zA-Z0-9-_]+/g, "").trim() || "Document";
+  return `${safeTitle}-${DOCUMENT_PDF_TYPE_LABELS[type]}.pdf`;
+}
