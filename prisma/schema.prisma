@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                 String     @id @default(cuid())
+  clerkId            String     @unique
+  email              String     @unique
+  isPro              Boolean    @default(false)
+  subscriptionStatus String     @default("inactive")
+  generationQuota    Int        @default(3)
+  documents          Document[]
+}
+
+model Document {
+  id        String       @id @default(cuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id])
+  type      DocumentType
+  title     String
+  content   String
+  tone      String
+  createdAt DateTime     @default(now())
+
+  @@index([userId])
+  @@index([userId, type])
+}
+
+enum DocumentType {
+  PROPOSAL
+  SOW
+  BRIEF
+}
