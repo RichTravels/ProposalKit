@@ -1,5 +1,8 @@
+"use client";
+
 import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import Link from "next/link";
+import UpgradeButton from "@/components/UpgradeButton";
 
 const clerkAppearance = {
   layout: {
@@ -7,7 +10,11 @@ const clerkAppearance = {
   },
 };
 
-export default function Header() {
+type HeaderProps = {
+  isPro?: boolean;
+};
+
+export default function Header({ isPro = false }: HeaderProps) {
   return (
     <header className="flex items-center justify-between border-b px-6 py-4">
       <div className="flex items-center gap-6">
@@ -36,7 +43,17 @@ export default function Header() {
         </SignedIn>
       </div>
 
-      <div>
+      <div className="flex items-center gap-3">
+        <SignedIn>
+          {!isPro ? (
+            <UpgradeButton
+              label="Upgrade to Pro"
+              className="hidden rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:bg-gray-400 sm:inline-block"
+            />
+          ) : null}
+          <UserButton afterSignOutUrl="/" appearance={clerkAppearance} />
+        </SignedIn>
+
         <SignedOut>
           <SignInButton mode="modal">
             <button className="rounded-md bg-indigo-600 px-4 py-2 text-white transition hover:bg-indigo-700">
@@ -44,10 +61,6 @@ export default function Header() {
             </button>
           </SignInButton>
         </SignedOut>
-
-        <SignedIn>
-          <UserButton afterSignOutUrl="/" appearance={clerkAppearance} />
-        </SignedIn>
       </div>
     </header>
   );

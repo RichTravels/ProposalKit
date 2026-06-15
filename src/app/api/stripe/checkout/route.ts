@@ -1,0 +1,59 @@
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { getEnv, getRequiredEnv } from "@/lib/env";
+import { getStripe } from "@/lib/stripe";
+
+export async function POST() {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const user = await db.user.findUnique({ where: { clerkId: userId } });
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const client = await clerkClient();
+    const clerkUser = await client.users.getUser(userId);
+    const email = clerkUser.emailAddresses[0]?.emailAddress ?? user.email;
+
+    const stripe = getStripe();
+    const existingCustomers = await stripe.customers.list({ email, limit: 1 });
+    const customer =
+      existingCustomers.data[0] ??
+      (await stripe.customers.create({
+        email,
+        metadata: { clerkId: userId },
+      }));
+
+    if (!customer.metadata.clerkId) {
+      await stripe.customers.update(customer.id, {
+        metadata: { clerkId: userId },
+      });
+    }
+
+    const baseUrl = getEnv("NEXT_PUBLIC_URL") ?? "http://localhost:3000";
+    const priceId = getRequiredEnv("STRIPE_PRICE_ID");
+
+    const session = await stripe.checkout.sessions.create({
+      customer: customer.id,
+      mode: "subscription",
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${baseUrl}/dashboard?upgraded=true`,
+      cancel_url: `${baseUrl}/proposal/generate`,
+      metadata: { clerkId: userId },
+    });
+
+    if (!session.url) {
+      return NextResponse.json({ error: "Failed to create checkout session" }, { status: 500 });
+    }
+
+    return NextResponse.json({ url: session.url });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Checkout failed";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

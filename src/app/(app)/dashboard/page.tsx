@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import UpgradeButton from "@/components/UpgradeButton";
 import { db, ensureUser } from "@/lib/db";
 import { DOCUMENT_LABELS, DOCUMENT_PATHS } from "@/lib/utils";
 import type { DocumentType } from "@prisma/client";
@@ -48,6 +49,11 @@ export default async function DashboardPage() {
             <span className="font-medium text-indigo-600">Pro plan active.</span>
           )}
         </p>
+        {!user?.isPro ? (
+          <div className="mt-4">
+            <UpgradeButton label="Upgrade to Pro" className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:bg-gray-400" />
+          </div>
+        ) : null}
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
