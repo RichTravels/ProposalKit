@@ -19,9 +19,11 @@
     "next": "^14.2.25",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-markdown": "^10.1.0",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.20",
     "@types/node": "^20.10.5",
     "@types/react": "^18.2.45",
     "autoprefixer": "^10.4.23",

@@ -1,4 +1,5 @@
 import CopyButton from "@/components/CopyButton";
+import ReactMarkdown from "react-markdown";
 
 type DocumentViewProps = {
   title: string;
@@ -16,8 +17,8 @@ export default function DocumentView({ title, content, tone }: DocumentViewProps
         </div>
         <CopyButton text={content} copyKey={`${title}-copy`} />
       </div>
-      <div className="whitespace-pre-wrap px-6 py-5 text-sm leading-relaxed text-slate-800">
-        {content}
+      <div className="prose prose-sm max-w-none px-6 py-5 text-slate-800">
+        <ReactMarkdown>{content}</ReactMarkdown>
       </div>
     </div>
   );
