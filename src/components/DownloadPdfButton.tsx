@@ -4,16 +4,24 @@ import { useState } from "react";
 import { exportToPdf } from "@/lib/exportPdf";
 
 type DownloadPdfButtonProps = {
-  filename: string;
+  content: string;
+  title: string;
+  documentType: string;
+  date: string;
 };
 
-export default function DownloadPdfButton({ filename }: DownloadPdfButtonProps) {
+export default function DownloadPdfButton({
+  content,
+  title,
+  documentType,
+  date,
+}: DownloadPdfButtonProps) {
   const [loading, setLoading] = useState(false);
 
   async function handleDownload() {
     setLoading(true);
     try {
-      await exportToPdf("pdf-content", filename);
+      await exportToPdf(content, title, documentType, date);
     } finally {
       setLoading(false);
     }

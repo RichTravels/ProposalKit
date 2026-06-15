@@ -6,13 +6,11 @@ import { auth } from "@clerk/nextjs/server";
 import { ArrowLeft } from "lucide-react";
 import DocumentView from "@/components/DocumentView";
 import DownloadPdfButton from "@/components/DownloadPdfButton";
-import PdfPrintContent from "@/components/PdfPrintContent";
 import { db } from "@/lib/db";
 import {
   DOCUMENT_BADGE_LABELS,
   DOCUMENT_BADGE_STYLES,
-  DOCUMENT_LABELS,
-  buildPdfFilename,
+  DOCUMENT_PDF_TYPE_LABELS,
   formatDocumentDate,
 } from "@/lib/utils";
 
@@ -38,7 +36,6 @@ export default async function DashboardDocumentPage({ params }: Props) {
   if (!document) notFound();
 
   const formattedDate = formatDocumentDate(new Date(document.createdAt));
-  const pdfFilename = buildPdfFilename(document.title, document.type);
 
   return (
     <div className="space-y-6">
@@ -64,14 +61,14 @@ export default async function DashboardDocumentPage({ params }: Props) {
         content={document.content}
         tone={document.tone}
         theme="dark"
-        actions={<DownloadPdfButton filename={pdfFilename} />}
-      />
-
-      <PdfPrintContent
-        title={document.title}
-        typeLabel={DOCUMENT_LABELS[document.type]}
-        date={formattedDate}
-        content={document.content}
+        actions={
+          <DownloadPdfButton
+            content={document.content}
+            title={document.title}
+            documentType={DOCUMENT_PDF_TYPE_LABELS[document.type]}
+            date={formattedDate}
+          />
+        }
       />
     </div>
   );
