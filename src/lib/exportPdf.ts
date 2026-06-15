@@ -52,6 +52,14 @@ export async function exportToPdf(
       continue;
     }
 
+    if (trimmed.startsWith("## Approvals") || trimmed.startsWith("Approvals")) {
+      const remainingSpace = pageHeight - margin - y;
+      if (remainingSpace < 60) {
+        pdf.addPage();
+        y = margin;
+      }
+    }
+
     if (trimmed.startsWith("# ")) {
       checkPage(14);
       pdf.setFontSize(20);
