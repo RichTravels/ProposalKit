@@ -256,10 +256,10 @@ export default async function LandingPage() {
             © 2025 ProposalKit. Built for independent consultants.
           </p>
           <div className="flex items-center gap-6 text-sm text-slate-500">
-            <Link href="#" className="transition hover:text-slate-300">
+            <Link href="/privacy" className="transition hover:text-slate-300">
               Privacy Policy
             </Link>
-            <Link href="#" className="transition hover:text-slate-300">
+            <Link href="/terms" className="transition hover:text-slate-300">
               Terms of Service
             </Link>
           </div>
