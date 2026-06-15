@@ -1,59 +1,114 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { FormEvent, useState } from "react";
+import { flushSync } from "react-dom";
 import type { DocumentType } from "@prisma/client";
-import { generateDocument } from "@/app/actions/generateDocument";
-import type { GenerateDocumentState } from "@/app/actions/generateDocument.types";
 import DocumentView from "@/components/DocumentView";
 import { GenerationError } from "@/components/GenerationError";
 import { DOCUMENT_LABELS } from "@/lib/utils";
-
-const initialState: GenerateDocumentState = {};
 
 type Props = {
   type: DocumentType;
 };
 
-function SubmitButton({ type }: { type: DocumentType }) {
-  const { pending } = useFormStatus();
-
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="w-full rounded-lg bg-indigo-600 py-3 font-bold text-white transition-colors hover:bg-indigo-700 disabled:bg-gray-400"
-    >
-      {pending ? "Generating..." : `Generate ${DOCUMENT_LABELS[type]}`}
-    </button>
-  );
-}
-
 export default function GenerateDocumentForm({ type }: Props) {
-  const boundAction = generateDocument.bind(null, type);
-  const [state, formAction] = useFormState(boundAction, initialState);
-  const [displayState, setDisplayState] = useState<GenerateDocumentState>(initialState);
-  const prevStateRef = useRef<GenerateDocumentState>(initialState);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [generatedContent, setGeneratedContent] = useState("");
+  const [title, setTitle] = useState("");
+  const [tone, setTone] = useState("");
 
-  useEffect(() => {
-    if (state !== prevStateRef.current) {
-      prevStateRef.current = state;
-      setDisplayState(state);
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsGenerating(true);
+    setError(null);
+    setGeneratedContent("");
+    setTitle("");
+    setTone("");
+
+    const formData = new FormData(event.currentTarget);
+    const payload = {
+      type,
+      clientName: String(formData.get("clientName") ?? "").trim(),
+      projectSummary: String(formData.get("projectSummary") ?? "").trim(),
+      budget: String(formData.get("budget") ?? "").trim(),
+      timeline: String(formData.get("timeline") ?? "").trim(),
+      tone: String(formData.get("tone") ?? "professional").trim() || "professional",
+    };
+
+    if (!payload.clientName || !payload.projectSummary) {
+      setError("Client name and project summary are required.");
+      setIsGenerating(false);
+      return;
     }
-  }, [state]);
 
-  async function handleAction(formData: FormData) {
-    setDisplayState(initialState);
     try {
-      await formAction(formData);
-    } catch {
-      window.location.reload();
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || "Generation failed");
+      }
+
+      if (!response.body) {
+        throw new Error("No response stream");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let result = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        console.log("CHUNK:", chunk);
+        result += chunk;
+        flushSync(() => {
+          setGeneratedContent(result);
+        });
+      }
+
+      result += decoder.decode();
+      flushSync(() => {
+        setGeneratedContent(result);
+      });
+
+      const saveResponse = await fetch("/api/generate", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type,
+          clientName: payload.clientName,
+          content: result,
+          tone: payload.tone,
+        }),
+      });
+
+      const saveData = await saveResponse.json();
+
+      if (!saveResponse.ok) {
+        throw new Error(saveData.error || "Failed to save document");
+      }
+
+      setTitle(saveData.title ?? payload.clientName);
+      setTone(saveData.tone ?? payload.tone);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Generation failed";
+      setError(message);
+    } finally {
+      setIsGenerating(false);
     }
   }
 
   return (
     <div className="space-y-8">
-      <form action={handleAction} className="mx-auto max-w-2xl space-y-4">
+      <form onSubmit={handleSubmit} className="mx-auto max-w-2xl space-y-4">
         <div className="flex flex-col gap-2">
           <label htmlFor="clientName" className="font-medium">
             Client name
@@ -127,16 +182,26 @@ export default function GenerateDocumentForm({ type }: Props) {
           </select>
         </div>
 
-        <SubmitButton type={type} />
+        <button
+          type="submit"
+          disabled={isGenerating}
+          className="w-full rounded-lg bg-indigo-600 py-3 font-bold text-white transition-colors hover:bg-indigo-700 disabled:bg-gray-400"
+        >
+          {isGenerating ? "Generating..." : `Generate ${DOCUMENT_LABELS[type]}`}
+        </button>
       </form>
 
-      {displayState.error ? <GenerationError message={displayState.error} /> : null}
+      {error ? <GenerationError message={error} /> : null}
 
-      {displayState.content && displayState.title ? (
+      {(isGenerating || generatedContent) ? (
         <DocumentView
-          title={displayState.title}
-          content={displayState.content}
-          tone={displayState.tone}
+          title={
+            isGenerating && !generatedContent
+              ? "Generating..."
+              : title || "Generating..."
+          }
+          content={generatedContent}
+          tone={tone || undefined}
         />
       ) : null}
     </div>
