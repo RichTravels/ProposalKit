@@ -21,6 +21,7 @@ export async function deleteDocument(documentId: string, type: DocumentType) {
 
   await db.document.delete({ where: { id: documentId } });
   revalidatePath(DOCUMENT_PATHS[type].library);
+  revalidatePath("/dashboard");
 
   return { success: true };
 }

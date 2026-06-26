@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import DeleteDocumentButton from "@/components/DeleteDocumentButton";
 import UpgradeButton from "@/components/UpgradeButton";
 import { db, ensureUser } from "@/lib/db";
 import {
@@ -129,12 +130,15 @@ export default async function DashboardPage() {
                     {formatDocumentDate(new Date(doc.createdAt))}
                   </p>
                 </div>
-                <Link
-                  href={`/dashboard/${doc.id}`}
-                  className="inline-flex shrink-0 items-center justify-center rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-indigo-500 hover:text-white"
-                >
-                  View
-                </Link>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Link
+                    href={`/dashboard/${doc.id}`}
+                    className="inline-flex items-center justify-center rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-indigo-500 hover:text-white"
+                  >
+                    View
+                  </Link>
+                  <DeleteDocumentButton documentId={doc.id} type={doc.type} />
+                </div>
               </li>
             ))}
           </ul>
