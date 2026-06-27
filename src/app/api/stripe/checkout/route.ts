@@ -4,6 +4,10 @@ import { db } from "@/lib/db";
 import { getRequiredEnv } from "@/lib/env";
 import { getStripe } from "@/lib/stripe";
 
+function getAppBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_APP_URL || "https://proposal-kit-rose.vercel.app";
+}
+
 export async function POST() {
   try {
     const { userId } = await auth();
@@ -21,30 +25,44 @@ export async function POST() {
     const email = clerkUser.emailAddresses[0]?.emailAddress ?? user.email;
 
     const stripe = getStripe();
-    const existingCustomers = await stripe.customers.list({ email, limit: 1 });
-    const customer =
-      existingCustomers.data[0] ??
-      (await stripe.customers.create({
-        email,
-        metadata: { clerkId: userId },
-      }));
+    let customerId = user.stripeCustomerId;
 
-    if (!customer.metadata.clerkId) {
-      await stripe.customers.update(customer.id, {
+    if (customerId) {
+      await stripe.customers.update(customerId, {
         metadata: { clerkId: userId },
+      });
+    } else {
+      const existingCustomers = await stripe.customers.list({ email, limit: 1 });
+      const customer =
+        existingCustomers.data[0] ??
+        (await stripe.customers.create({
+          email,
+          metadata: { clerkId: userId },
+        }));
+
+      customerId = customer.id;
+
+      if (!customer.metadata.clerkId) {
+        await stripe.customers.update(customerId, {
+          metadata: { clerkId: userId },
+        });
+      }
+
+      await db.user.update({
+        where: { clerkId: userId },
+        data: { stripeCustomerId: customerId },
       });
     }
 
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL || "https://proposal-kit-rose.vercel.app";
     const priceId = getRequiredEnv("STRIPE_PRICE_ID");
+    const baseUrl = getAppBaseUrl();
 
     const session = await stripe.checkout.sessions.create({
-      customer: customer.id,
+      customer: customerId,
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${baseUrl}/dashboard?upgraded=true`,
-      cancel_url: `${baseUrl}/proposal/generate`,
+      cancel_url: `${baseUrl}/dashboard`,
       metadata: { clerkId: userId },
     });
 

@@ -9,13 +9,20 @@ datasource db {
 }
 
 model User {
-  id                 String     @id @default(cuid())
-  clerkId            String     @unique
-  email              String     @unique
-  isPro              Boolean    @default(false)
-  subscriptionStatus String     @default("inactive")
-  generationQuota    Int        @default(3)
-  documents          Document[]
+  id                   String     @id @default(cuid())
+  clerkId              String     @unique
+  email                String     @unique
+  isPro                Boolean    @default(false)
+  subscriptionStatus   String     @default("inactive")
+  generationQuota      Int        @default(3)
+  stripeCustomerId     String?    @unique
+  stripeSubscriptionId String?    @unique
+  documents            Document[]
+}
+
+model StripeWebhookEvent {
+  eventId     String   @id
+  processedAt DateTime @default(now())
 }
 
 model Document {

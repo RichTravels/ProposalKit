@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import DeleteDocumentButton from "@/components/DeleteDocumentButton";
+import ManageBillingButton from "@/components/ManageBillingButton";
+import UpgradedBanner from "@/components/UpgradedBanner";
 import UpgradeButton from "@/components/UpgradeButton";
 import { db, ensureUser } from "@/lib/db";
 import {
@@ -16,7 +18,11 @@ import type { DocumentType } from "@prisma/client";
 
 const DOC_TYPES: DocumentType[] = ["PROPOSAL", "SOW", "BRIEF"];
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { upgraded?: string };
+}) {
   const { userId } = await auth();
 
   if (!userId) {
@@ -44,9 +50,27 @@ export default async function DashboardPage() {
   const documents = user?.documents ?? [];
   const isPro = user?.isPro ?? false;
   const quotaRemaining = user?.generationQuota ?? 0;
+  const subscriptionStatus = user?.subscriptionStatus ?? "inactive";
+  const showUpgradedBanner = searchParams.upgraded === "true";
 
   return (
     <div className="space-y-10">
+      {showUpgradedBanner ? <UpgradedBanner /> : null}
+
+      {isPro && subscriptionStatus === "past_due" ? (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-950/40 px-5 py-4">
+          <p className="text-sm text-amber-100">
+            Your latest payment failed. Update your billing details to keep Pro access.
+          </p>
+          <div className="mt-3">
+            <ManageBillingButton
+              label="Update payment method"
+              className="rounded-md border border-amber-500/50 px-3 py-2 text-sm font-medium text-amber-100 transition hover:border-amber-400 hover:text-white disabled:opacity-50"
+            />
+          </div>
+        </div>
+      ) : null}
+
       <section>
         <h1 className="text-3xl font-bold tracking-tight text-white">Dashboard</h1>
         <p className="mt-2 text-slate-400">
@@ -65,6 +89,13 @@ export default async function DashboardPage() {
             <UpgradeButton
               label="Upgrade to Pro"
               className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:bg-slate-600"
+            />
+          </div>
+        ) : isPro ? (
+          <div className="mt-4">
+            <ManageBillingButton
+              label="Manage subscription"
+              className="rounded-lg border border-slate-700 px-5 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white disabled:opacity-50"
             />
           </div>
         ) : null}

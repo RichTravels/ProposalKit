@@ -55,7 +55,7 @@ User signs in (Clerk)
 cd ProposalKit
 npm install
 cp .env.example .env.local
-# Fill in Clerk, Supabase, and Anthropic keys
+# Fill in Clerk, Supabase, Anthropic, and Stripe keys
 npm run db:push
 npm run dev
 ```
@@ -98,15 +98,16 @@ proposalkit/
 
 ## Database Schema
 
-- **User** — synced from Clerk; tracks free-tier `generationQuota` (3 by default)
+- **User** — synced from Clerk; tracks free-tier `generationQuota` (3 by default), Pro status, and Stripe IDs (`stripeCustomerId`, `stripeSubscriptionId`)
 - **Document** — saved outputs with type (`PROPOSAL`, `SOW`, `BRIEF`), client title, content, and tone
+- **StripeWebhookEvent** — idempotency log for processed Stripe webhook events
 
 ---
 
-## Next Steps
+## Billing (Stripe)
 
-1. Create a Supabase project and run `npm run db:push`
-2. Create a Clerk application and add keys to `.env.local`
-3. Add an Anthropic API key
-4. Deploy to Vercel
-5. Add Stripe billing when you're ready to monetize
+ProposalKit Pro ($29/mo) uses **Stripe Checkout** for subscriptions and the **Stripe Customer Portal** for self-service cancel/update payment.
+
+**Webhook endpoint:** `https://proposal-ai-kit.vercel.app/api/stripe/webhook`
+
+**Events handled:** `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`
