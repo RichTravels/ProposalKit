@@ -1,6 +1,18 @@
 # ProposalKit
 
-AI-powered document generation for solo consultants. Generate **Project Proposals**, **Statements of Work**, and **Post-Discovery Briefs** from a few inputs — authenticated, saved, and ready to refine.
+**[Live demo →](https://proposal-ai-kit.vercel.app)**
+
+Every new client deal means hours rebuilding the same documents from scratch — digging through old proposals, reformatting SOWs, and turning raw discovery notes into something client-ready. **ProposalKit** replaces that manual workflow with a production SaaS app: sign in, add client context and discovery notes, and generate structured **Project Proposals**, **Statements of Work**, and **Post-Discovery Briefs** in minutes — saved to your library and ready to export. Built and shipped end-to-end to solve a real consultant bottleneck, not a toy demo.
+
+<p align="center">
+  <img src="Public/Images/Landingpage.png" alt="ProposalKit landing page" width="900" />
+</p>
+
+<p align="center">
+  <img src="Public/Images/Dashboard.png" alt="Dashboard with document history and one-click generation" width="440" />
+  &nbsp;
+  <img src="Public/Images/Generate.png" alt="AI document generation from client context and discovery notes" width="440" />
+</p>
 
 Modeled after [RecruitKit](https://github.com/RichTravels/recruitkit)'s architecture: Next.js, Clerk, Supabase, Prisma, and Claude.
 
