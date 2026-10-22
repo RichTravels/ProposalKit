@@ -5,6 +5,9 @@ import { revalidatePath } from "next/cache";
 import type { DocumentType } from "@prisma/client";
 import { db } from "@/lib/db";
 import { buildPrompt, createClaudeCompletion } from "@/lib/anthropic";
+import { getRequiredEnv } from "@/lib/env";
+import { reserveGeneration } from "@/lib/generation-quota";
+import { quotaDb } from "@/lib/quota-db";
 import { DOCUMENT_PATHS } from "@/lib/utils";
 import type { GenerateDocumentState } from "./generateDocument.types";
 
@@ -36,16 +39,21 @@ export async function generateDocument(
     const user = await db.user.findUnique({ where: { clerkId: userId } });
     if (!user) return { error: "User not found" };
 
-    if (!user.isPro && user.generationQuota <= 0) {
-      return {
-        error:
-          "You've used all 3 free generations. Upgrade to continue generating documents.",
-      };
-    }
-
     const input = parseDocumentForm(formData);
     if (!input.clientName) return { error: "Client name is required" };
     if (!input.projectSummary) return { error: "Project summary is required" };
+
+    // Fail before spending a credit when this server is misconfigured.
+    getRequiredEnv("ANTHROPIC_API_KEY");
+
+    const reservation = await reserveGeneration(quotaDb(), user.id);
+    if (reservation.ok === false) {
+      return { error: reservation.message };
+    }
+
+    if (reservation.charged) {
+      revalidatePath("/dashboard");
+    }
 
     const content = await createClaudeCompletion(buildPrompt(type, input));
 
@@ -58,13 +66,6 @@ export async function generateDocument(
         tone: input.tone,
       },
     });
-
-    if (!user.isPro) {
-      await db.user.update({
-        where: { clerkId: userId },
-        data: { generationQuota: { decrement: 1 } },
-      });
-    }
 
     revalidatePath(DOCUMENT_PATHS[type].library);
     revalidatePath("/dashboard");

@@ -9,15 +9,26 @@ datasource db {
 }
 
 model User {
-  id                   String     @id @default(cuid())
-  clerkId              String     @unique
-  email                String     @unique
-  isPro                Boolean    @default(false)
-  subscriptionStatus   String     @default("inactive")
-  generationQuota      Int        @default(3)
-  stripeCustomerId     String?    @unique
-  stripeSubscriptionId String?    @unique
+  id                   String               @id @default(cuid())
+  clerkId              String               @unique
+  email                String               @unique
+  isPro                Boolean              @default(false)
+  subscriptionStatus   String               @default("inactive")
+  generationQuota      Int                  @default(3)
+  stripeCustomerId     String?              @unique
+  stripeSubscriptionId String?              @unique
   documents            Document[]
+  generationRateLimit  GenerationRateLimit?
+}
+
+/// One row per user. Fixed window counter for model generations.
+/// The primary key is the user id, so the foreign key is indexed.
+model GenerationRateLimit {
+  userId      String   @id
+  windowStart DateTime @default(now())
+  count       Int      @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model StripeWebhookEvent {
